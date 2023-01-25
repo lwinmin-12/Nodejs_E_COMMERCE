@@ -1,9 +1,11 @@
-import express ,{NextFunction , Request , Response ,ErrorRequestHandler} from "express";
+import express ,{NextFunction , Request , Response } from "express";
 import mongoose from "mongoose";
 import config from "config"
 import permitRouter from "./routers/permit.route";
 import roleRoute from "./routers/role.route";
-import { backup, migrate } from "./migrations/migrator";
+import { addOwnerRole, backup, migrate, rp } from "./migrations/migrator";
+import userRoute from "./routers/user.route";
+import { hasAnyPermit, hasAnyRole, validateToken } from "./utils/validator";
 
 const app  = express()
 const port = config.get<number>('port')
@@ -14,9 +16,9 @@ const dbUrl = config.get<string>('dbUrl')
  app.use(express.json())
  mongoose.connect(dbUrl)
 
- app.use("/permits" , permitRouter)
- app.use("/roles" , roleRoute)
-
+ app.use("/permits" , validateToken(),hasAnyPermit(["Create_Category","Edit_Category","Delete_Category"]),permitRouter)
+ app.use("/roles" , validateToken() , hasAnyRole(["Owner" , "Manager" ,"Supervisor"]) , roleRoute)
+app.use('/users' , userRoute)
 
 app.use((err :any , req :Request , res :Response , next :NextFunction) => {
       // console.error(err.errors)
@@ -28,10 +30,11 @@ app.use((err :any , req :Request , res :Response , next :NextFunction) => {
 })
 
 const defaultData = async ()=>{
-  // migrate()
-  await backup()
+  await migrate()
+  await rp()
+  await addOwnerRole()
 }
 
-defaultData()
+// defaultData()
 
 app.listen(port, ()=> console.log(`server is running in http://${host}:${port}`))

@@ -1,14 +1,16 @@
 import mongoose from "mongoose";
 import {Schema} from "mongoose"
+import { permitDocument } from "./permit.model";
 import { roleDocument } from "./role.model";
 
 
 export interface userDocument extends mongoose.Document{ 
     email: string;
     name: string;
+    phone : string
     password: string;
     roles : roleDocument['_id']
-    permits : string
+    permits : permitDocument["_id"]
 }
 
 

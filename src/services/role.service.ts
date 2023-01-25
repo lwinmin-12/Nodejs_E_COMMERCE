@@ -7,7 +7,6 @@ export const addRole =async (name : roleDocument) => {
         return await new roleDB(name).save()
     }catch (e:any) {
       throw new Error(e);
-
     }
 }
 
