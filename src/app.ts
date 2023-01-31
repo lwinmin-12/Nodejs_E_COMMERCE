@@ -5,7 +5,13 @@ import permitRouter from "./routers/permit.route";
 import roleRoute from "./routers/role.route";
 import { addOwnerRole, backup, migrate, rp } from "./migrations/migrator";
 import userRoute from "./routers/user.route";
-import { hasAnyPermit, hasAnyRole, validateToken } from "./utils/validator";
+import { hasAnyPermit, hasAnyRole, validateRole, validateToken } from "./utils/validator";
+import categoryRoute from "./routers/category.route";
+import fileUpload from "express-fileupload";
+import subcatsRotue from "./routers/subcats.route";
+import childcatRoute from "./routers/childcat.route";
+import tagRoute from "./routers/tag.route";
+import deliveryRoute from "./routers/delivery.route";
 
 const app  = express()
 const port = config.get<number>('port')
@@ -14,11 +20,17 @@ const dbUrl = config.get<string>('dbUrl')
 
 
  app.use(express.json())
+ app.use(fileUpload())
  mongoose.connect(dbUrl)
 
- app.use("/permits" , validateToken(),hasAnyPermit(["Create_Category","Edit_Category","Delete_Category"]),permitRouter)
- app.use("/roles" , validateToken() , hasAnyRole(["Owner" , "Manager" ,"Supervisor"]) , roleRoute)
-app.use('/users' , userRoute)
+ app.use("/permits" , validateToken(),permitRouter)
+ app.use("/roles" , validateToken() , validateRole("Owner") , roleRoute)
+ app.use('/users' , userRoute)
+ app.use("/cats" , categoryRoute)
+ app.use("/subcats" , subcatsRotue)
+ app.use("/childcats" , childcatRoute)
+ app.use("/tags" , tagRoute)
+ app.use("/delivery" , deliveryRoute)
 
 app.use((err :any , req :Request , res :Response , next :NextFunction) => {
       // console.error(err.errors)
