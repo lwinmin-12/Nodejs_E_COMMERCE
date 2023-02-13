@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import {Schema} from "mongoose"
 
 export interface categoryDocument extends mongoose.Document{

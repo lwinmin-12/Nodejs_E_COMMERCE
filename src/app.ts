@@ -12,12 +12,19 @@ import subcatsRotue from "./routers/subcats.route";
 import childcatRoute from "./routers/childcat.route";
 import tagRoute from "./routers/tag.route";
 import deliveryRoute from "./routers/delivery.route";
+import warrantyRoute from "./routers/warranty.route";
+import productRoute from "./routers/product.route";
+import orderRoute from "./routers/order.route";
+import { checkToken ,get } from "./utils/helper";
+import { initialize } from "./utils/chat";
 
 const app  = express()
 const port = config.get<number>('port')
 const host = config.get<string>("host")
 const dbUrl = config.get<string>('dbUrl')
 
+const server = require('http').createServer(app)
+const io = require('socket.io')(server)
 
  app.use(express.json())
  app.use(fileUpload())
@@ -31,15 +38,40 @@ const dbUrl = config.get<string>('dbUrl')
  app.use("/childcats" , childcatRoute)
  app.use("/tags" , tagRoute)
  app.use("/delivery" , deliveryRoute)
+ app.use('/warranty' , warrantyRoute)
+ app.use('/product' , productRoute)
+ app.use('/orders' , orderRoute)
 
 app.use((err :any , req :Request , res :Response , next :NextFunction) => {
-      // console.error(err.errors)
       err.status = err.status || 200;
       res.status(err.status).json({
         con: false,
         msg: err.message,
       });
 })
+
+io.of('/chat').use(async (socket :any , next : NextFunction) => {
+      let token = socket.handshake.query.token;
+      if (token) {
+       let decoded =  await checkToken(token)
+
+         if (decoded) {
+            let user = await get(decoded._id);
+            if (user) {
+               socket.userData = user;
+               next();
+            } else {
+               next(new Error("Tokenization Error"));
+            }
+         } else {
+            next(new Error("Tokenization Error"));
+         }
+      } else {
+         next(new Error("Tokenization Error"));
+      }
+   }).on('connection', (socket : any) => {
+      require('./utils/chat').initialize(io, socket);
+   });
 
 const defaultData = async ()=>{
   await migrate()
@@ -49,4 +81,4 @@ const defaultData = async ()=>{
 
 // defaultData()
 
-app.listen(port, ()=> console.log(`server is running in http://${host}:${port}`))
+server.listen(port, ()=> console.log(`server is running in http://${host}:${port}`))

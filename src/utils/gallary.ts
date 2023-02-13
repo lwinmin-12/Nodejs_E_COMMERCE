@@ -25,7 +25,7 @@ export const saveImgs = (req : Request, res : Response, next : NextFunction) => 
 
   files.forEach((ea : any) => {
     let fileName = new Date().valueOf() + "_" + ea.name;
-    ea.mv(`upload/${fileName}`);
+    ea.mv(`./src/upload/${fileName}`);
     fileNames.push(fileName);
   });
   req.body["images"] = fileNames;
